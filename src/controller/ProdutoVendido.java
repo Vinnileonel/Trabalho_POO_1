@@ -1,6 +1,6 @@
-package cliente;
+package controller;
 
-import comercio.ProdutoInfo;
+import model.ProdutoInfo;
 
 /**
  * Representa um produto vendido numa compra. Atenção, esta classe não contém a

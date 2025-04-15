@@ -1,7 +1,7 @@
-package comercio;
+package model;
 
-import cliente.Cartao;
-import cliente.Cupao;
+import controller.Cartao;
+import controller.Cupao;
 
 /**
  * Classe que representa o inventário da empresa, desde os produtos, até aos

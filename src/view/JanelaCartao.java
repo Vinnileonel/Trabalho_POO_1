@@ -1,4 +1,4 @@
-package menu;
+package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,8 +27,8 @@ import javax.swing.SpringLayout;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 
-import cliente.Cartao;
-import cliente.Cupao;
+import controller.Cartao;
+import controller.Cupao;
 
 /**
  * Janela que simula a aplicação do cliente onde estes podem ver os cupões

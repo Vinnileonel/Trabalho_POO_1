@@ -1,4 +1,4 @@
-package comercio;
+package model;
 
 /**
  * Armazena a informação de um produto, como o código de barras, a marca, o

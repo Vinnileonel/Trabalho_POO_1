@@ -1,12 +1,10 @@
-package arranque;
-
 import java.util.List;
 
 import javax.swing.SwingUtilities;
 
-import comercio.Inventario;
-import menu.JanelaCartao;
-import menu.JanelaCompra;
+import model.Inventario;
+import view.JanelaCartao;
+import view.JanelaCompra;
 
 public class Main {
 

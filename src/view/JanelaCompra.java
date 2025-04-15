@@ -1,4 +1,4 @@
-package menu;
+package view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,10 +26,10 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import cliente.Cartao;
-import cliente.Venda;
-import comercio.Inventario;
-import comercio.ProdutoInfo;
+import controller.Cartao;
+import controller.Venda;
+import model.Inventario;
+import model.ProdutoInfo;
 
 /**
  * Janela que simula uma caixa das lojas da cadeia HonESTa. No lado direito,
