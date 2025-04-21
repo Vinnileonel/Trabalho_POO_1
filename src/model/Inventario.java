@@ -3,42 +3,67 @@ package model;
 import controller.Cartao;
 import controller.Cupao;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Classe que representa o inventário da empresa, desde os produtos, até aos
- * cartões e cupões. Responsável por armazenar todos esses dados, bem como
- * fornecer métodos de pesquisa que usem os códigos para descobrir os produtos.
+ * “Base de dados” da aplicação HonESta.
+ * <p>Guarda produtos, cartões e cupões em memória.</p>
  */
 public class Inventario {
+
+    /* ---------------------- armazenamento interno ---------------------- */
+    private final Map<String, ProdutoInfo> produtos = new HashMap<>();
+    private final Map<String, Cartao>      cartoes  = new HashMap<>();
+    private final Map<String, Cupao>       cupoes   = new HashMap<>();
+
+    /* --------------------------- INSERÇÃO ------------------------------ */
+
+    public void addProduto(ProdutoInfo p){
+        produtos.put(p.getCodigoBarras(), p);
+    }
+
+    public void addCupao(Cupao c){
+        cupoes.put(c.getNumero(), c);
+    }
+
+    public void addCartao(Cartao c){
+        cartoes.put(c.getNumero(), c);
+    }
+
+    /* --------------------------- PESQUISA ------------------------------ */
+
     /**
-     * Retorna qual o produto que tem um dado código de barras
-     * 
-     * @param codigoBarras o código de barras do produto que se pretende
-     * @return o produto com o código de barras, ou null caso não exista
+     * Procura um produto pelo código de barras.
+     * @param codigoBarras código de barras a procurar.
+     * @return ProdutoInfo ou {@code null} se não existir.
      */
     public ProdutoInfo getProduto(String codigoBarras) {
-        // TODO implementar este método
-        return null;
+        return produtos.get(codigoBarras);
     }
 
     /**
-     * Retorna o cartão com um dado número
-     * 
-     * @param numero o número do cartão a procurar
-     * @return o cartão com o número pedido, ou null caso não exista
+     * Procura um cartão pelo número.
+     * @param numero número do cartão.
+     * @return Cartao ou {@code null} se não existir.
      */
     public Cartao getCartao(String numero) {
-        // TODO implementar este método
-        return null;
+        return cartoes.get(numero);
     }
 
     /**
-     * Retorna o cupão com um dado número
-     * 
-     * @param numero o número do cupão a procurar
-     * @return o cupão com o número pedido, ou null caso não exista
+     * Procura um cupão pelo número.
+     * @param numero número do cupão.
+     * @return Cupao ou {@code null} se não existir.
      */
     public Cupao getCupao(String numero) {
-        // TODO implementar este método
-        return null;
+        return cupoes.get(numero);
     }
+
+    /* -------------- getters úteis para a interface gráfica ------------- */
+
+    public Collection<ProdutoInfo> todosProdutos(){ return produtos.values(); }
+    public Collection<Cartao>      todosCartoes() { return cartoes.values(); }
+    public Collection<Cupao>       todosCupoes() { return cupoes.values(); }
 }

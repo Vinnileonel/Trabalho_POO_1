@@ -31,208 +31,148 @@ import controller.Cartao;
 import controller.Cupao;
 
 /**
- * Janela que simula a aplicação do cliente onde estes podem ver os cupões
- * associados ao seu cartão e ativá-los.
- * 
+ * Janela que simula a aplicação do cliente onde estes podem ver e ativar
+ * os cupões do seu cartão.
  */
 public class JanelaCartao extends JFrame {
 
-    // constantes dos elementos visuais a usar na janela
     private static final int ALTURA = 600;
     private static final int COMPRIMENTO = RendererCupoes.DIM_BASE.width + 70;
     private static final int ALTURA_ATUAIS = 4 * ALTURA / 7;
     private static final Font ftDesconto = new Font("Arial", Font.BOLD, 20);
-    private static final Font ftTexto = ftDesconto.deriveFont(Font.PLAIN, 14);
+    private static final Font ftTexto    = ftDesconto.deriveFont(Font.PLAIN, 14);
     private static final Font ftValidade = ftTexto.deriveFont(12f);
 
-    // elementos visuais
     private JLabel saldoLbl;
     private DefaultListModel<Cupao> cupoesAtuaisModel;
     private DefaultListModel<Cupao> cupoesProximosModel;
-
-    // o cartão que está atualmente a ser visualizado
     private Cartao cardAtual;
 
-    /**
-     * Cria uma JanelaCartão com uma coleção de cartões. Esta solução admite que,
-     * durante a execução da aplicação, não serão adicionados novos cartões, o que é
-     * limitativo. Esta solução foi adotada para simplificar os testes já que, numa
-     * situação real, teriamos uma aplicação por cartão e não uma para todos os
-     * cartões.
-     * 
-     * @param cartoes a coleção de cartões existente quando se arranca com a
-     *                aplicação
-     */
     public JanelaCartao(Collection<Cartao> cartoes) {
         setupGUI(cartoes);
     }
 
-    /**
-     * Método chamado pela janela quando o utilizador seleciona outro cartão
-     * 
-     * @param c o cartão a ser usado
-     */
     public void mudarCartao(Cartao c) {
-        cardAtual = c;
-        // TODO é preciso atualizar os cupões
-        c.atualizarCupoes();
+        this.cardAtual = c;
+        c.atualizarCupoes();                  // limpa expirados
 
-        // TODO é preciso colocar a informação certa nas variáveis
-        long saldo = 0;
-        List<Cupao> cupoesAtuais = List.of();
-        List<Cupao> cupoesFuturos = List.of();
+        long saldo = c.getSaldo();            // valor do saldo
+        List<Cupao> atuais = c.getCupoesDisponiveis();
+        List<Cupao> futuros = c.getCupoesFuturos();
 
         updateSaldo(saldo);
-        updateCupoesAtuais(cupoesAtuais);
-        updateCupoesProximos(cupoesFuturos);
+        updateCupoesAtuais(atuais);
+        updateCupoesProximos(futuros);
     }
 
-    /**
-     * Método chamado pela janela sempre que pretende obter a informação de um cupão
-     * para a desenhar
-     * 
-     * @param g              onde desenhar os dados
-     * @param rendererCupoes quem vai desenhar os dados
-     * @param cupao          o cupao do qual se pretendem os dados
-     */
-    public void desenharCupao(Graphics g, RendererCupoes rendererCupoes, Cupao cupao) {
-        // TODO colocar os dados certos nas variáveis
-        String resumo = "resumo";
-        float desconto = 0.01f;
-        LocalDate comeca = LocalDate.now();
-        LocalDate acaba = LocalDate.now();
-
-        // fazer o desenho da informação
-        rendererCupoes.paintDadosCupao(g, resumo, desconto, comeca, acaba);
+    public void desenharCupao(Graphics g, RendererCupoes r, Cupao cupao) {
+        String resumo    = cupao.getDescricao();
+        float desconto   = cupao.getPercentagem() / 100f;
+        LocalDate inicio = cupao.getInicio();
+        LocalDate fim    = cupao.getFim();
+        r.paintDadosCupao(g, resumo, desconto, inicio, fim);
     }
 
-    /**
-     * Método chamado quando o utilizador pressiona o botão de ativar o cartão para
-     * realizar uma compra, ativando também os cupões selecionados.
-     * 
-     * @param cupoesSelecionados lista com os cupões selecionados para ativar
-     */
-    private void ativarCartao(List<Cupao> cupoesSelecionados) {
-        // TODO ativar o cartão com os cupões selecionados
-
-        // mostrar a mensagem de que se está à espera de usar o cartão
-        mostrarMensagem("Pode usar o cartão", "Cartão ativo");
-
-        // no fim de mostrar a mensagem, atualizar a informação toda do cartão, pois
-        // podem ter sido removidos cupões e o saldo também pode ter sofrido alterações
-        mudarCartao(cardAtual);
+    private void ativarCartao(List<Cupao> selecionados) {
+        cardAtual.ativar(selecionados);       // ativa cupões
+        mostrarMensagem("Cartão ativo", "Pode usar o cartão");
+        mudarCartao(cardAtual);               // refresca saldo e listas
     }
 
-    /**
-     * Rsponsável por desenhar a info do cartão na lista
-     */
     private final class RendererCartoes extends DefaultListCellRenderer {
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
             Cartao c = (Cartao) value;
-
-            // TODO colocar a informação certa na variável
-            String numero = "1233";
+            String numero = c.getNumero();     // mostra o número do cartão
             return super.getListCellRendererComponent(list, numero, index, isSelected, cellHasFocus);
         }
     }
 
-    /**
-     * Atualiza o saldo na janela
-     * 
-     * @param saldo valor do saldo a apresentar
-     */
     private void updateSaldo(long saldo) {
         saldoLbl.setText(String.format("%.2f€", saldo / 100.0f));
     }
 
-    /**
-     * Atualiza a lista dos cupões em vigor hoje
-     * 
-     * @param cupoesAtuais a lista dos cupoes em vigor
-     */
     private void updateCupoesAtuais(List<Cupao> cupoesAtuais) {
         cupoesAtuaisModel.clear();
         cupoesAtuaisModel.addAll(cupoesAtuais);
     }
 
-    /**
-     * Atualiza a lista dos cupões que estão em vigor no futuro
-     * 
-     * @param cupoesProximos os cupões que estarão em vigor no futuro
-     */
     private void updateCupoesProximos(List<Cupao> cupoesProximos) {
         cupoesProximosModel.clear();
         cupoesProximosModel.addAll(cupoesProximos);
     }
 
-    /**
-     * Inicializa a interface gráfica da janela
-     * 
-     * @param cartoes a coleção de cartões que existem na empresa
-     */
     private void setupGUI(Collection<Cartao> cartoes) {
         setSize(COMPRIMENTO, ALTURA);
         setTitle("App do cliente");
-        JComboBox<Cartao> listaCartoes = new JComboBox<>(new Vector<>(cartoes));
-        listaCartoes.setRenderer(new RendererCartoes());
-        listaCartoes.addActionListener(l -> mudarCartao((Cartao) listaCartoes.getSelectedItem()));
-        getContentPane().add(listaCartoes, BorderLayout.NORTH);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JComboBox<Cartao> combo = new JComboBox<>(new Vector<>(cartoes));
+        combo.setRenderer(new RendererCartoes());
+        combo.addActionListener(l -> mudarCartao((Cartao) combo.getSelectedItem()));
+        getContentPane().add(combo, BorderLayout.NORTH);
 
         SpringLayout layout = new SpringLayout();
         JPanel panel = new JPanel(layout);
         panel.setBorder(new TitledBorder("Dados do cartão"));
 
-        Font ftSaldo = new Font("Arial", Font.BOLD, 18);
-        JLabel saldoTxtLbl = new JLabel("Saldo: ");
-        saldoTxtLbl.setFont(ftSaldo);
+        JLabel lblTexto = new JLabel("Saldo:");
+        lblTexto.setFont(ftTexto);
+        panel.add(lblTexto);
+
         saldoLbl = new JLabel("0.00€");
-        saldoLbl.setFont(ftSaldo);
-        panel.add(saldoTxtLbl);
+        saldoLbl.setFont(ftTexto);
         panel.add(saldoLbl);
 
-        layout.putConstraint(SpringLayout.NORTH, saldoTxtLbl, 5, SpringLayout.NORTH, panel);
-        layout.putConstraint(SpringLayout.WEST, saldoTxtLbl, 5, SpringLayout.WEST, panel);
-        layout.putConstraint(SpringLayout.NORTH, saldoLbl, 0, SpringLayout.NORTH, saldoTxtLbl);
-        layout.putConstraint(SpringLayout.EAST, saldoLbl, -5, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.NORTH, lblTexto, 5, SpringLayout.NORTH, panel);
+        layout.putConstraint(SpringLayout.WEST,  lblTexto, 5, SpringLayout.WEST,  panel);
+        layout.putConstraint(SpringLayout.NORTH, saldoLbl, 0, SpringLayout.NORTH, lblTexto);
+        layout.putConstraint(SpringLayout.EAST,  saldoLbl, -5, SpringLayout.EAST, panel);
 
+        // Cupões atuais
         JPanel atuais = new JPanel(new BorderLayout());
         atuais.setBorder(new TitledBorder("Cupões em vigor"));
-        panel.add(atuais);
         cupoesAtuaisModel = new DefaultListModel<>();
-        JList<Cupao> listaCupoes = new JList<>(cupoesAtuaisModel);
-        listaCupoes.setCellRenderer(new RendererCupoes());
-        atuais.add(new JScrollPane(listaCupoes));
+        JList<Cupao> listAtuais = new JList<>(cupoesAtuaisModel);
+        listAtuais.setCellRenderer(new RendererCupoes());
+        atuais.add(new JScrollPane(listAtuais));
+        panel.add(atuais);
 
-        layout.putConstraint(SpringLayout.NORTH, atuais, 3, SpringLayout.SOUTH, saldoTxtLbl);
-        layout.putConstraint(SpringLayout.EAST, atuais, -3, SpringLayout.EAST, panel);
-        layout.putConstraint(SpringLayout.WEST, atuais, 3, SpringLayout.WEST, panel);
+        layout.putConstraint(SpringLayout.NORTH, atuais, 3, SpringLayout.SOUTH, lblTexto);
+        layout.putConstraint(SpringLayout.EAST,  atuais, -3, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.WEST,  atuais,  3, SpringLayout.WEST, panel);
         layout.putConstraint(SpringLayout.SOUTH, atuais, ALTURA_ATUAIS, SpringLayout.NORTH, atuais);
 
-        JButton usarBt = new JButton("Usar cartão");
-        usarBt.addActionListener(l -> ativarCartao(listaCupoes.getSelectedValuesList()));
-        panel.add(usarBt);
-        layout.putConstraint(SpringLayout.NORTH, usarBt, 3, SpringLayout.SOUTH, atuais);
-        layout.putConstraint(SpringLayout.EAST, usarBt, -3, SpringLayout.EAST, panel);
-        layout.putConstraint(SpringLayout.WEST, usarBt, 3, SpringLayout.WEST, panel);
+        // Botão usar cartão
+        JButton bt = new JButton("Usar cartão");
+        bt.addActionListener(l -> ativarCartao(listAtuais.getSelectedValuesList()));
+        panel.add(bt);
+        layout.putConstraint(SpringLayout.NORTH, bt, 3, SpringLayout.SOUTH, atuais);
+        layout.putConstraint(SpringLayout.EAST,  bt, -3, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.WEST,  bt,  3, SpringLayout.WEST, panel);
 
+        // Próximos cupões
         JPanel proximos = new JPanel(new BorderLayout());
         proximos.setBorder(new TitledBorder("Próximos Cupões"));
-        panel.add(proximos);
         cupoesProximosModel = new DefaultListModel<>();
-        JList<Cupao> listaProximosCupoes = new JList<>(cupoesProximosModel);
-        listaProximosCupoes.setCellRenderer(new RendererCupoes());
-        listaProximosCupoes.setEnabled(false);
-        proximos.add(new JScrollPane(listaProximosCupoes));
-        layout.putConstraint(SpringLayout.NORTH, proximos, 3, SpringLayout.SOUTH, usarBt);
-        layout.putConstraint(SpringLayout.EAST, proximos, -3, SpringLayout.EAST, panel);
-        layout.putConstraint(SpringLayout.WEST, proximos, 3, SpringLayout.WEST, panel);
+        JList<Cupao> listFuturos = new JList<>(cupoesProximosModel);
+        listFuturos.setCellRenderer(new RendererCupoes());
+        listFuturos.setEnabled(false);
+        proximos.add(new JScrollPane(listFuturos));
+        panel.add(proximos);
+
+        layout.putConstraint(SpringLayout.NORTH, proximos, 3, SpringLayout.SOUTH, bt);
+        layout.putConstraint(SpringLayout.EAST,  proximos, -3, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.WEST,  proximos,  3, SpringLayout.WEST, panel);
         layout.putConstraint(SpringLayout.SOUTH, proximos, -3, SpringLayout.SOUTH, panel);
 
         getContentPane().add(panel, BorderLayout.CENTER);
-        if (listaCartoes.getItemCount() > 0)
-            listaCartoes.setSelectedIndex(0);
+
+        if (!cartoes.isEmpty()) {
+            combo.setSelectedIndex(0);
+            mudarCartao(combo.getItemAt(0));
+        }
     }
 
     private final class RendererCupoes extends DefaultListCellRenderer {
@@ -245,8 +185,8 @@ public class JanelaCartao extends JFrame {
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                boolean cellHasFocus) {
+        public Component getListCellRendererComponent(JList<?> list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
             cupao = (Cupao) value;
             return super.getListCellRendererComponent(list, "", index, isSelected, cellHasFocus);
         }
@@ -257,7 +197,8 @@ public class JanelaCartao extends JFrame {
             desenharCupao(g, this, cupao);
         }
 
-        private void paintDadosCupao(Graphics g, String resumo, float desconto, LocalDate inicio, LocalDate fim) {
+        private void paintDadosCupao(Graphics g, String resumo, float desconto,
+                LocalDate inicio, LocalDate fim) {
             g.setColor(Color.ORANGE);
             g.fillOval(2, 6, 45, 45);
             g.drawRoundRect(2, 2, DIM_BASE.width - 4, DIM_BASE.height - 4, 6, 6);
@@ -268,42 +209,11 @@ public class JanelaCartao extends JFrame {
             g.setFont(ftTexto);
             g.drawString(resumo, 60, 20);
             g.setFont(ftValidade);
-            String validade = String.format("%02d/%02d - %02d/%02d", inicio.getDayOfMonth(), inicio.getMonthValue(),
+            String validade = String.format("%02d/%02d - %02d/%02d",
+                    inicio.getDayOfMonth(), inicio.getMonthValue(),
                     fim.getDayOfMonth(), fim.getMonthValue());
             g.drawString(validade, 60, 50);
         }
-
     }
 
-    /**
-     * Mostra uma janela de diálogo com a mensagem e o título indicados e fica à
-     * espera que o utilizador pressione em ok. Enquento espera, a janela de cartões
-     * permanece bloqueada.
-     * 
-     * @param mensagem a mensagem a aparecer na janela de diálogo
-     * @param titulo   o título da janela de diálogo.
-     */
-    private void mostrarMensagem(String mensagem, String titulo) {
-        JDialog dialog = new JDialog(this, titulo, Dialog.ModalityType.DOCUMENT_MODAL);
-        dialog.setLayout(new BorderLayout());
-
-        JOptionPane optionPane = new JOptionPane(mensagem, JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION);
-        optionPane.addPropertyChangeListener(e2 -> {
-            String prop = e2.getPropertyName();
-            if (dialog.isVisible() && (e2.getSource() == optionPane) && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
-                dialog.dispose();
-            }
-        });
-        dialog.setContentPane(optionPane);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        final Timer t = new Timer(500, list -> {
-            if (!cardAtual.estaAtivo()) {
-                ((Timer) list.getSource()).stop();
-                dialog.dispose();
-            }
-        });
-        t.start();
-        dialog.setVisible(true);
-    }
 }
