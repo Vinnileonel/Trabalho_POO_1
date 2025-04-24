@@ -1,33 +1,47 @@
 package controller;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Classe que representa um cupão emitido pela cadeia de lojas HonESta. Este
- * cupão pode ser associado a um ou mais cartões de fidelização. Cada cupão dá
- * direito a um desconto (em cartão) na compra dos produtos que abrange.
+ * Representa um cupão de desconto da cadeia HonESTa.
  */
 public class Cupao {
-    private final String numero; // número do cupão
-    private final String resumo; // do que é o cupão
-    private final int desconto; // porcentagem e nao valor em centavos, coloquei final nesses tres porque eles nao vao mudar
-    private LocalDate dataInicio; // data de início do cupão
-    private LocalDate dataFim; // data de fim do cupão
-    private ArrayList<String> codigoProduto = new ArrayList<String>(); // lista dos códigos do produduto
+    private final String numero;
+    private final String resumo;
+    private final int percentual;            // em %
+    private final LocalDate dataInicio;
+    private final LocalDate dataFim;
+    private final List<String> produtos;     // códigos de barras imutáveis
 
-    
-    // coonstrutor
-    public Cupao(String numero, String resumo, int desconto, LocalDate dataInicio, LocalDate dataFim,
-            ArrayList<String> codigoProduto) {
-        this.numero = checkNumero(numero);
-        this.resumo = checkResumo(resumo);
-        this.desconto = checkDesconto(desconto);
-        this.dataInicio = dataInicio;
-        this.dataFim = dataFim;
-        this.codigoProduto = checkCodigoProduto(codigoProduto);
+    public Cupao(String numero,
+                 String resumo,
+                 int percentual,
+                 LocalDate dataInicio,
+                 LocalDate dataFim,
+                 List<String> produtos) {
+        this.numero      = Objects.requireNonNull(numero, "número não pode ser null").strip();
+        if (this.numero.isEmpty()) throw new IllegalArgumentException("número não pode ser vazio");
+
+        this.resumo      = Objects.requireNonNull(resumo, "resumo não pode ser null").strip();
+        if (this.resumo.isEmpty()) throw new IllegalArgumentException("resumo não pode ser vazio");
+
+        if (percentual < 0 || percentual > 100)
+            throw new IllegalArgumentException("percentual inválido: " + percentual);
+        this.percentual  = percentual;
+
+        this.dataInicio  = Objects.requireNonNull(dataInicio, "dataInicio não pode ser null");
+        this.dataFim     = Objects.requireNonNull(dataFim, "dataFim não pode ser null");
+        if (dataInicio.isAfter(dataFim))
+            throw new IllegalArgumentException("dataInicio não pode ser após dataFim");
+
+        Objects.requireNonNull(produtos, "lista de produtos não pode ser null");
+        if (produtos.isEmpty())
+            throw new IllegalArgumentException("lista de produtos não pode estar vazia");
+        this.produtos    = Collections.unmodifiableList(List.copyOf(produtos));
     }
-    // getters e setters
 
     public String getNumero() {
         return numero;
@@ -37,124 +51,58 @@ public class Cupao {
         return resumo;
     }
 
-    public int getDesconto() {
-        return desconto;
+    /**
+     * Percentual de desconto (0–100).
+     */
+    public int getPercentual() {
+        return percentual;
     }
 
     public LocalDate getDataInicio() {
         return dataInicio;
     }
 
-    public void setDataInicio(LocalDate dataInicio) {
-        this.dataInicio = dataInicio;
-    }
-
     public LocalDate getDataFim() {
         return dataFim;
     }
 
-    public void setDataFim(LocalDate dataFim) {
-        this.dataFim = dataFim;
+    /**
+     * Códigos de barras dos produtos abrangidos por este cupão.
+     */
+    public List<String> getProdutos() {
+        return produtos;
     }
-
-    public ArrayList<String> getCodigoProduto() {
-        return codigoProduto;
-    }
-
-    public void setCodigoProduto(ArrayList<String> codigoProduto) {
-        this.codigoProduto = checkCodigoProduto(codigoProduto);
-    }
-    //metodos pra checar, nao fiz para as datas porque ja sao do tipo LocalDate
-    private ArrayList<String> checkCodigoProduto(ArrayList<String> codigoProduto) {
-        if (codigoProduto.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
-        return codigoProduto;
-    }
-    private String checkNumero(String numero) {
-        if (numero.isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        return numero;
-    }
-    private String checkResumo(String resumo) {
-        if (resumo.isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        return resumo;
-    }
-    private int checkDesconto(int desconto) {
-        if (desconto < 0 || desconto > 100) {
-            throw new IllegalArgumentException();
-        }
-        return desconto;
-    }   
 
     /**
-     * Indica se o cupão está válido no dia de hoje, isto é, se o dia de hoje está
-     * dentro do prazo de utilização.
-     * 
-     * @return true se está dentro do prazo de utilização
+     * @return true se hoje estiver entre dataInicio e dataFim (inclusive).
      */
     public boolean estaValido() {
-        // Feito implementar este método
         LocalDate hoje = LocalDate.now();
-        if(hoje.isAfter(dataInicio) && hoje.isBefore(dataFim) || hoje.isEqual(dataInicio) || hoje.isEqual(dataFim)) {
-            return true;
-        }
-        return false;
+        return (!hoje.isBefore(dataInicio)) && (!hoje.isAfter(dataFim));
     }
 
     /**
-     * Indica se o cupão está válido num dado dia, isto é, se esse dia está dentro
-     * do prazo de utilização.
-     * 
-     * @param data dia em que se pretende verificar se o cupão está válido
-     * @return true se a data está dentro do prazo de utilização
+     * @return true se o cupão abrange o produto (igual ao seu código de barras).
      */
-    public boolean estaValido(LocalDate data) {
-        // Feito implementar este método
-        if(data.isAfter(dataInicio) && data.isBefore(dataFim) || data.isEqual(dataInicio) || data.isEqual(dataFim)) {
-            return true;
-        }
-        return false;
+    public boolean abrange(ProdutoVendido pv) {
+        Objects.requireNonNull(pv, "ProdutoVendido não pode ser null");
+        return produtos.contains(pv.getCodigoBarras());
     }
 
     /**
-     * Aplica o cupão de desconto a um cartão e a uma venda. Se a venda contiver
-     * algum dos produtos abrangidos pelo cupão, este é dado como tendo sido
-     * aplicado. Se for aplicado deve ser removido do cartão.
-     * 
-     * @param c o cartão a ser usado na venda
-     * @param v a venda a ser processada
-     * @return true se o cupão foi aplicado na venda
+     * Aplica este cupão ao produto, ajustando o desconto em cêntimos.
+     * @return true se foi aplicado (válido e abrange o produto), false caso contrário.
      */
-    public boolean aplicar(Cartao c, Venda v) {
-        // TODO implementar este método
-        
-        return false;
+    public boolean aplicar(ProdutoVendido pv) {
+        if (!estaValido() || !abrange(pv)) return false;
+        long valorDesconto = pv.getPreco() * percentual / 100;
+        pv.setDesconto(valorDesconto);
+        return true;
     }
 
-    /**
-     * Indica se o produto indicado é abrangido pelo cupão. O produto é abrangido
-     * pelo cupão se fizer parte da lista dos produtos e não tiver já sido aplicado
-     * ao produto um desconto maior do que o dado pelo cupão.
-     * 
-     * @param p o produto a testar
-     * @return true, se o produto é abrangido pela cupão
-     */
-    public boolean abrange(ProdutoVendido p) {
-        // TODO implementar este método
-        return false;
-    }
-
-    /**
-     * Método auxiliar para aplicar o cupão a um produto.
-     * 
-     * @param c o cartão onde acumular o saldo
-     * @param p o produto a ser usado
-     */
-    private void aplicar(Cartao c, ProdutoVendido p) {
-        // TODO implementar este método
+    @Override
+    public String toString() {
+        return String.format("Cupão %s [%d%%] ‒ %s (%s a %s)",
+                numero, percentual, resumo, dataInicio, dataFim);
     }
 }
